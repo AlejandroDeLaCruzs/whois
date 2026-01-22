@@ -32,13 +32,16 @@ El backend está construido con **Node.js, Express y MongoDB**, usando **JWT par
 ```bash
 cd backend
 npm install
-npm run dev´´´
+npm run dev
+```
+
 
 ### Frontend
-bash
+```bash
 cd whois
 npm install
 expo start
+```
 
 | Método | Endpoint         | Descripción                | Body                                               |
 | ------ | ---------------- | -------------------------- | -------------------------------------------------- |
