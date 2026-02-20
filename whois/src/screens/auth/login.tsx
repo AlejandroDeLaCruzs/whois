@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   View,
   Text,
@@ -17,38 +17,45 @@ import { RootStackParamList } from "../../../App";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 type LoginScreenProp = NativeStackNavigationProp<RootStackParamList, "Login">;
+
 const { width, height } = Dimensions.get("window");
 
 const Login = () => {
-  const [email, setUserName] = useState<string>("");
+  const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
-  const [inicioSesion, setInicioSesion] = useState(false);
+  const [loading, setLoading] = useState<boolean>(false);
   const navigation = useNavigation<LoginScreenProp>();
 
-  useEffect(() => {
-    const login = async () => {
-      try {
-        const result = await loginUser(email, password);
-        if (result.success) {
-          await AsyncStorage.setItem("token", result.data.token);
-          navigation.navigate("Home");
-        } else {
-          Alert.alert("Error", "Usuario o contraseña incorrectos");
-        }
-      } catch (error) {
-        console.error("Error en login:", error);
+  const handleLogin = async () => {
+    if (loading) return;
+    setLoading(true);
+
+    try {
+      const result = await loginUser(email, password);
+      console.log("Resultado del login:", result);
+
+      if (result.success) {
+        await AsyncStorage.setItem("token", result.data.token);
+        navigation.navigate("Home");
+      } else {
+        Alert.alert("Error", "Usuario o contraseña incorrectos");
       }
-    };
-    if (inicioSesion) {
-      login();
-      setInicioSesion(false);
+    } catch (error) {
+      console.error("Error en login:", error);
+      Alert.alert(
+        "Error de conexión",
+        "No se pudo conectar al servidor.\nVerifica tu internet o que el backend esté corriendo y accesible desde el móvil."
+      );
+    } finally {
+      setLoading(false);
     }
-  }, [inicioSesion]);
+  };
 
   return (
     <KeyboardAvoidingView
       style={styles.container}
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
     >
       {/* Curvas de colores de fondo */}
       <View style={styles.curvePurple} />
@@ -68,26 +75,31 @@ const Login = () => {
         style={styles.input}
         placeholder="Email"
         placeholderTextColor="#8B8FC4"
-        onChangeText={setUserName}
+        onChangeText={setEmail}
         value={email}
         keyboardType="email-address"
         autoCapitalize="none"
+        autoCorrect={false}
       />
       <TextInput
         style={styles.input}
-        placeholder="Password"
+        placeholder="Contraseña"
         placeholderTextColor="#8B8FC4"
         onChangeText={setPassword}
         value={password}
         secureTextEntry
+        autoCorrect={false}
       />
 
       {/* Botón */}
       <TouchableOpacity
-        style={styles.button}
-        onPress={() => setInicioSesion(true)}
+        style={[styles.button, loading && { opacity: 0.7 }]}
+        onPress={handleLogin}
+        disabled={loading}
       >
-        <Text style={styles.buttonText}>Iniciar Sesión</Text>
+        <Text style={styles.buttonText}>
+          {loading ? "Cargando..." : "Iniciar Sesión"}
+        </Text>
       </TouchableOpacity>
     </KeyboardAvoidingView>
   );
@@ -100,7 +112,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: "#EEF2FF",
-    overflow: 'hidden',
+    overflow: "hidden",
   },
   // ================= Curvas de fondo =================
   curvePurple: {
@@ -155,7 +167,6 @@ const styles = StyleSheet.create({
     zIndex: -1,
     opacity: 0.6,
   },
-
   title: {
     fontSize: 48,
     fontWeight: "bold",
