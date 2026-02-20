@@ -42,15 +42,27 @@ cd whois
 npm install
 expo start
 ```
+### Auth (Autenticación)
+| Método | Endpoint         | Descripción                            | Auth required  |
+| ------ | ---------------- | -------------------------------------- | -------------- |
+| GET    | `/auth/`         | Prueba la conexión a la ruta           | No             |
+| POST   | `/auth/register` | Registrar un nuevo usuario             | No             |
+| POST   | `/auth/login`    | Iniciar sesión                         | No             |
+| GET    | `/auth/me`       | Obtener información del usuario actual | Sí (pendiente) |
 
-| Método | Endpoint         | Descripción                | Body                                               |
-| ------ | ---------------- | -------------------------- | -------------------------------------------------- |
-| POST   | `/auth/register` | Registrar un nuevo usuario | `{ "email": "user@mail.com", "password": "1234" }` |
-| POST   | `/auth/login`    | Login y obtener token JWT  | `{ "email": "user@mail.com", "password": "1234" }` |
+### Questions
 
+| Método | Endpoint           | Descripción                 | Auth required |
+| ------ | ------------------ | --------------------------- | ------------- |
+| GET    | `/questions/today` | Obtener la pregunta del día | Sí            |
+| GET    | `/questions/:id`   | Obtener pregunta por ID     | Sí            |
 
-| Método | Endpoint           | Descripción                 | Body / Headers                                                                      |
-| ------ | ------------------ | --------------------------- | ----------------------------------------------------------------------------------- |
-| GET    | `/questions/today` | Obtener la pregunta del día | Header: `Authorization: Bearer <token>`                                             |
-| POST   | `/questions/vote`  | Votar una opción            | `{ "questionId": "id", "optionId": "a" }` + Header: `Authorization: Bearer <token>` |
+### Vote
+
+| Método | Endpoint             | Descripción                             | Auth required |
+| ------ | -------------------- | --------------------------------------- | ------------- |
+| POST   | `/votes/`            | Votar en la pregunta del día            | Sí            |
+| GET    | `/votes/results/:id` | Obtener resultados (total por opción)   | Sí            |
+| GET    | `/votes/myVote/:id`  | Obtener la opción votada por el usuario | Sí            |
+
 
