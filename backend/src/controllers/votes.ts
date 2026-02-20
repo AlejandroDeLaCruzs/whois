@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import { AuthRequest } from "../middleware/auth";
 import { VOTES } from "../utils/utils";
 import { getDb } from "../config/db";
-import { getReusltsQuestion } from "../services/votes";
+import { getMyVoteById, getReusltsQuestion } from "../services/votes";
 
 const coleccion = () => getDb().collection(VOTES);
 
@@ -31,5 +31,16 @@ export const ressults = async (req: AuthRequest, res: Response) => {
 
   const results = await getReusltsQuestion(idQuestion);
 
-  return results;
+  res.status(200).send(results);
 };
+
+
+
+export const myVoteById = async (req: AuthRequest, res: Response) => {
+  console.log("ID recibido:", req.params.id);
+
+  const data = await getMyVoteById(req.params.id as string);
+  console.log(data);
+
+  res.status(200).send({data});
+}

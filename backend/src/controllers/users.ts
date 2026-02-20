@@ -56,8 +56,7 @@ export const login = async (req: Request, res: Response) => {
         expiresIn: "1h",
       },
     );
-
-    res.status(200).json({ message: "Login correcto", token });
+    res.status(200).json({data: {token }, success: true});
   } catch (err) {
     res.status(500).json({ message: err });
   }

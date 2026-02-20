@@ -9,12 +9,6 @@ export const getTodayQuestion = async (token: string) => {
   return res.data; // { id, text, options: [{id, text}] }
 };
 
-export const voteQuestion = async (token: string, questionId: string, optionId: string) => {
-  const res = await axios.post(`${API_URL}/votes`, 
-    { questionId, optionId },
-    { headers: { Authorization: `Bearer ${token}` } }
-  );
-  return res.data; // { message }
-};
+
 
 

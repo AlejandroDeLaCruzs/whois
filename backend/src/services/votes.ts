@@ -21,3 +21,9 @@ export const getReusltsQuestion = async (id: string) => {
 
   return reusltados;
 };
+
+export const getMyVoteById = async (id: string) => {
+  const resultado = await coleccion().findOne({ questionId: id });
+  console.log("AAAA")
+  return resultado;
+};

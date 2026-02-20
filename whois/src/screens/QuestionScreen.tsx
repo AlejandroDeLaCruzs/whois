@@ -5,127 +5,63 @@ import {
   TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
-  Alert,
+  Dimensions,
 } from "react-native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Animatable from "react-native-animatable";
-import axios from "axios";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { getTodayQuestion } from "../api/question";
+import { myVote, voteQuestion } from "../api/vote";
 
-type Option = {
-  id: string;
-  text: string;
-};
-
-type Question = {
-  _id: string;
-  text: string;
-  options: Option[];
-  date: string;
-};
-
-const API_URL = "http://localhost:3000";
+type Option = { id: string; text: string };
 
 export default function QuestionScreen() {
-  const [question, setQuestion] = useState<Question | null>(null);
+  const [question, setQuestion] = useState<string>("");
+  const [options, setOptions] = useState<Option[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [voted, setVoted] = useState(false);
+  const [id, setData] = useState("");
 
   useEffect(() => {
     fetchQuestion();
   }, []);
 
-  // =========================
-  // FETCH PREGUNTA DEL DÍA
-  // =========================
   const fetchQuestion = async () => {
     const token = await AsyncStorage.getItem("token");
     if (!token) return;
-
     try {
       setLoading(true);
-
-      const response = await axios.get(`${API_URL}/questions/today`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      const data = response.data;
-
-      // data es un ARRAY
-      if (!Array.isArray(data) || data.length === 0) {
-        Alert.alert("Info", "No hay pregunta para hoy");
-        setLoading(false);
-        return;
-      }
-
-      const todayQuestion: Question = data[0];
-
-      setQuestion(todayQuestion);
-
-      // comprobar si ya votó
-      await fetchUserVote(todayQuestion._id);
-
+      const data = await getTodayQuestion(token);
+      setQuestion(data.data.question.text);
+      setOptions(data.data.question.options);
+      setData(data.data.question._id);
+      await fetchUserVote(data.data.question._id);
       setLoading(false);
     } catch (error) {
       setLoading(false);
-      Alert.alert("Error", "No se pudo cargar la pregunta del día");
+      console.log(error);
     }
   };
 
-  // =========================
-  // FETCH VOTO DEL USUARIO
-  // =========================
   const fetchUserVote = async (questionId: string) => {
     const token = await AsyncStorage.getItem("token");
     if (!token) return;
-
-    try {
-      const response = await axios.get(
-        `${API_URL}/votes/${questionId}/me`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-
-      const data = response.data;
-
-      // backend devuelve: { optionId: "a" }
-      if (data && data.optionId) {
-        setSelectedOption(data.optionId);
-        setVoted(true);
-      }
-    } catch (error: any) {
-      // 404 = no ha votado → OK
-      if (error.response?.status !== 404) {
-        Alert.alert("Error", "No se pudo comprobar tu voto");
-      }
+    const data = await myVote(token, id);
+    if (data) {
+      setSelectedOption(data.optionId);
+      setVoted(true);
     }
   };
 
-  // =========================
-  // VOTAR
-  // =========================
   const handleVote = async (optionId: string) => {
     if (!question || voted) return;
-
     const token = await AsyncStorage.getItem("token");
     if (!token) return;
-
-    try {
-      await axios.post(
-        `${API_URL}/votes`,
-        { questionId: question._id, optionId },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-
-      setSelectedOption(optionId);
-      setVoted(true);
-    } catch (error) {
-      Alert.alert("Error", "No se pudo registrar tu voto");
-    }
+    await voteQuestion(token, id, optionId);
+    setSelectedOption(optionId);
+    setVoted(true);
   };
 
-  // =========================
-  // LOADING
-  // =========================
   if (loading || !question) {
     return (
       <View style={styles.container}>
@@ -134,70 +70,122 @@ export default function QuestionScreen() {
     );
   }
 
-  // =========================
-  // UI
-  // =========================
   return (
     <View style={styles.container}>
-      <Text style={styles.questionText}>{question.text}</Text>
+      {/* Fondo decorativo */}
+      <View style={styles.backgroundCurves}>
+        <View style={styles.curveTop} />
+        <View style={styles.curveBottom} />
+      </View>
 
-      {question.options.map((opt) => {
-        const isSelected = selectedOption === opt.id;
+      {/* Título animado */}
+      <Animatable.Text animation="bounceIn" style={styles.appTitle}>
+        Whois
+      </Animatable.Text>
 
-        return (
-          <Animatable.View
-            key={opt.id}
-            animation={isSelected && voted ? "bounceIn" : undefined}
-            duration={500}
-            style={{ width: "100%" }}
-          >
+      {/* Contenedor centrado vertical */}
+      <View style={styles.centerContent}>
+        <Animatable.Text
+          animation="fadeIn"
+          delay={300}
+          style={styles.questionText}
+        >
+          {question}
+        </Animatable.Text>
+
+        {options.map((option, index) => (
+          <Animatable.View key={option.id} animation="fadeInUp" delay={index * 150}>
             <TouchableOpacity
               style={[
                 styles.optionButton,
-                isSelected && voted && styles.optionSelected,
+                selectedOption === option.id && styles.optionSelected,
               ]}
-              onPress={() => handleVote(opt.id)}
-              disabled={voted}
+              onPress={() => handleVote(option.id)}
             >
               <Text
                 style={[
                   styles.optionText,
-                  isSelected && voted && { color: "#fff" },
+                  selectedOption === option.id && styles.optionTextSelected,
                 ]}
               >
-                {opt.text} {isSelected && voted ? "✅" : ""}
+                {option.text}
               </Text>
             </TouchableOpacity>
           </Animatable.View>
-        );
-      })}
+        ))}
+      </View>
     </View>
   );
 }
 
-// =========================
-// STYLES
-// =========================
+const { width } = Dimensions.get("window");
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
+    backgroundColor: "#eef2ff",
+    alignItems: "center",
+    justifyContent: "flex-start",
+  },
+  backgroundCurves: {
+    position: "absolute",
+    width: "100%",
+    height: "100%",
+  },
+  curveTop: {
+    position: "absolute",
+    top: -100,
+    left: -100,
+    width: width * 1.5,
+    height: 300,
+    backgroundColor: "#4f46e5",
+    borderRadius: 300,
+    opacity: 0.3,
+    transform: [{ rotate: "45deg" }],
+  },
+  curveBottom: {
+    position: "absolute",
+    bottom: -150,
+    right: -100,
+    width: width * 1.5,
+    height: 400,
+    backgroundColor: "#a5b4fc",
+    borderRadius: 400,
+    opacity: 0.3,
+    transform: [{ rotate: "-30deg" }],
+  },
+  appTitle: {
+    fontSize: 40,
+    fontWeight: "bold",
+    color: "#4f46e5",
+    marginTop: 60,
+    textAlign: "center",
+  },
+  centerContent: {
+    flex: 1,
     justifyContent: "center",
-    backgroundColor: "#f5f5f5",
+    width: "100%",
+    paddingHorizontal: 20,
   },
   questionText: {
-    fontSize: 22,
-    fontWeight: "bold",
-    marginBottom: 30,
+    fontSize: 24,
+    fontWeight: "600",
     textAlign: "center",
+    marginBottom: 30,
+    color: "#1f2937",
   },
   optionButton: {
     backgroundColor: "#fff",
-    padding: 15,
-    borderRadius: 10,
+    paddingVertical: 18,
+    borderRadius: 12,
     marginBottom: 15,
     borderWidth: 1,
     borderColor: "#ddd",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    elevation: 3,
     alignItems: "center",
   },
   optionSelected: {
@@ -206,5 +194,11 @@ const styles = StyleSheet.create({
   },
   optionText: {
     fontSize: 18,
+    color: "#1f2937",
+    fontWeight: "500",
+  },
+  optionTextSelected: {
+    color: "#fff",
+    fontWeight: "700",
   },
 });
