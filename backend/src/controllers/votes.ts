@@ -2,11 +2,12 @@ import { Request, Response } from "express";
 import { AuthRequest } from "../middleware/auth";
 import { VOTES } from "../utils/utils";
 import { getDb } from "../config/db";
+import { getReusltsQuestion } from "../services/votes";
 
 const coleccion = () => getDb().collection(VOTES);
 
 export const voteToday = async (req: AuthRequest, res: Response) => {
-  const userId = req.user?.id; 
+  const userId = req.user?.id;
   const { questionId, optionId } = req.body;
 
   const alreadyVoted = await coleccion().findOne({ userId, questionId });
@@ -23,4 +24,12 @@ export const voteToday = async (req: AuthRequest, res: Response) => {
   });
 
   res.json({ success: true });
+};
+
+export const ressults = async (req: AuthRequest, res: Response) => {
+  const idQuestion = req.params.id as string;
+
+  const results = await getReusltsQuestion(idQuestion);
+
+  return results;
 };

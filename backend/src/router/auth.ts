@@ -8,7 +8,7 @@ authrouter.get("/", async (req, res) => {
 });
 
 authrouter.post("/register", register);
-
 authrouter.post("/login", login);
+//authrouter.get("/me");
 
 export default authrouter;

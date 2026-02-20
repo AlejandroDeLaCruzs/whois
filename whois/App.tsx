@@ -5,16 +5,18 @@ import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 
 // Pantallas
-import LoginScreen from "./src/screens/auth/LoginScreen";
-import RegisterScreen from "./src/screens/auth/RegisterScreen";
+import LoginScreen from "./src/screens/auth/login";
+import RegisterScreen from "./src/screens/auth/register";
 import QuestionScreen from "./src/screens/QuestionScreen";
 
+// 🔹 Definimos todas las pantallas y sus parámetros (en este caso no reciben parámetros)
 export type RootStackParamList = {
   Login: undefined;
   Register: undefined;
   Home: undefined;
 };
 
+// 🔹 Creamos el Stack tipado
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export default function App() {
