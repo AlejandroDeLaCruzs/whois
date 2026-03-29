@@ -1,11 +1,13 @@
-import axios from "axios";
 
-const API_URL = "http://localhost:3000"; // Cambia al URL de tu backend
+import { api } from "./api";
+
+
 
 export const getTodayQuestion = async (token: string) => {
-  const res = await axios.get(`${API_URL}/questions/today`, {
+  const res = await api.get(`/questions/today`, {
     headers: { Authorization: `Bearer ${token}` },
   });
+  
   return res.data; // { id, text, options: [{id, text}] }
 };
 

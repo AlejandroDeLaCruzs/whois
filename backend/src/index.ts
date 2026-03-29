@@ -9,6 +9,7 @@ import questionRouter from "./router/questions";
 import router from "./router/votes";
 
 denotev.config();
+
 connectMongoDB().then(() => console.log("Se ha concetado"));
 
 const app = express();
@@ -19,7 +20,7 @@ app.use(errorHandler);
 
 app.use("/auth", authrouter);
 
-app.use(authMiddleware);
+
 
 app.use("/questions", questionRouter);
 app.use("/votes", router);

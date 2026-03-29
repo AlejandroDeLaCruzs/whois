@@ -2,10 +2,10 @@ import { Request, Response } from "express";
 import { QuestionsModel } from "../models/questions";
 import { AuthRequest } from "../middleware/auth";
 
-export const getTodayQuestion = async (req: Request, res: Response) => {
+export const getTodayQuestion = async (req: AuthRequest, res: Response) => {
   try {
     const question = await QuestionsModel.getTodayQuestion();
-    res.status(200).json({data: {question}});
+   res.status(200).json({ data: question, success: true });
   } catch (error) {
     console.log("error");
   }

@@ -1,10 +1,12 @@
 import axios from "axios";
-
-const API_URL = "http://localhost:3000"; // Cambia al URL de tu backend
+import { api } from "./api";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export const loginUser = async (email: string, password: string) => {
   try {
-    const res = await axios.post(`${API_URL}/auth/login`, { email, password });
+    const res = await api.post(`/auth/login`, { email, password });
+    const token = res.data.data.token as string;
+    await AsyncStorage.setItem("token", token);
     return res.data; // { token, message }
   } catch (err: any) {
     if (err.response && err.response.data) {
@@ -15,10 +17,9 @@ export const loginUser = async (email: string, password: string) => {
   }
 };
 
-
 export const registerUser = async (email: string, password: string) => {
   try {
-    const res = await axios.post(`${API_URL}/auth/register`, { email, password });
+    const res = await axios.post(`/auth/register`, { email, password });
     return res.data; // { message }
   } catch (err: any) {
     if (err.response && err.response.data) {
@@ -29,3 +30,10 @@ export const registerUser = async (email: string, password: string) => {
   }
 };
 
+export const logoutUser = async () => {
+  await AsyncStorage.removeItem("token"); // 🗑️ Borra el token al cerrar sesión
+};
+
+export const getToken = async () => {
+  return await AsyncStorage.getItem("token"); // 👈 Recupera el token
+};

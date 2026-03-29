@@ -19,7 +19,7 @@ export const authMiddleware = (
   next: NextFunction
 ) => {
   const authHeader = req.headers["authorization"];
-
+ 
   if (!authHeader) {
     return res.status(401).json({ message: "Token requerido" });
   }
@@ -27,12 +27,12 @@ export const authMiddleware = (
   const token = authHeader.split(" ")[1]; // Bearer TOKEN
 
   try {
-    console.log(token);
+    
     const decoded = jwt.verify(token, SECRET) as {
       id: string;
       email: string;
     };
-
+    console.log("Usuario", decoded);
     req.user = decoded; 
     next();
   } catch (error) {

@@ -1,46 +1,63 @@
-import { Request, Response } from "express";
+import { Response } from "express";
 import { AuthRequest } from "../middleware/auth";
 import { VOTES } from "../utils/utils";
 import { getDb } from "../config/db";
-import { getMyVoteById, getReusltsQuestion } from "../services/votes";
+import { getMyVoteById, getResultsQuestion } from "../services/votes";
 
 const coleccion = () => getDb().collection(VOTES);
 
 export const voteToday = async (req: AuthRequest, res: Response) => {
-  const userId = req.user?.id;
-  const { questionId, optionId } = req.body;
+  try {
+    const userId = req.user?.id;
+    const { optionId } = req.body;
+    const { questionId } = req.params;
+    console.log("usuario antes de votar", userId);
 
-  const alreadyVoted = await coleccion().findOne({ userId, questionId });
-  if (alreadyVoted) {
-    return res.status(400).json({ error: "Already voted" });
+    // ✅ Comprueba si ya votó
+    const alreadyVoted = await coleccion().findOne({ userId, questionId });
+    if (alreadyVoted) {
+      return res.status(400).json({ message: "Ya has votado hoy" });
+    }
+
+    // ✅ Guarda el voto
+    await coleccion().insertOne({
+      userId,
+      questionId,
+      optionId,
+      createdAt: new Date(),
+    });
+
+    // ✅ Devuelve los resultados tras votar
+    const results = await getResultsQuestion(String(questionId));
+    res.status(201).json({ success: true, results }); // 👈 devuelve results al front
+  } catch (err: any) {
+    res.status(500).json({ message: err.message });
   }
-
-  // Guardar voto
-  await coleccion().insertOne({
-    userId,
-    questionId,
-    optionId,
-    createdAt: new Date(),
-  });
-
-  res.json({ success: true });
 };
 
 export const ressults = async (req: AuthRequest, res: Response) => {
   const idQuestion = req.params.id as string;
 
-  const results = await getReusltsQuestion(idQuestion);
+  const results = await getResultsQuestion(idQuestion);
 
   res.status(200).send(results);
 };
 
-
-
 export const myVoteById = async (req: AuthRequest, res: Response) => {
-  console.log("ID recibido:", req.params.id);
+  try {
+    const questionId = req.params.id;
+    const userId = req.user?.id; 
 
-  const data = await getMyVoteById(req.params.id as string);
-  console.log(data);
+    const data = await getMyVoteById(String(questionId), userId as string);
 
-  res.status(200).send({data});
-}
+    if (!data) {
+      return res.status(200).json({ hasVoted: false });
+    }
+
+    const results = await getResultsQuestion(String(questionId));
+    res.status(200).json({ hasVoted: true, optionId: data.optionId, results });
+
+  } catch (err: any) {
+    res.status(500).json({ message: err.message });
+  }
+};
